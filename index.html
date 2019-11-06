@@ -1,0 +1,136 @@
+<html>
+
+<head>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+        }
+
+        img {
+            display: block;
+            margin: auto;
+            max-width: 96vw;
+            transition: all .2s;
+            transform: scale(0.85);
+            opacity: .5;
+        }
+
+        img:hover {
+            opacity: 1;
+            cursor: pointer;
+            transform: scale(1);
+            transition: all .2s;
+            box-shadow: 0 0 2px 2px white;
+        }
+
+        #container.noGap >img {
+            transform: scale(1);
+        }
+
+        #container.noGap >img:hover {
+            box-shadow: 0 0 0 0;
+        }
+    </style>
+</head>
+
+<body>
+    <input id=uploader multiple webkitdirectory="" directory accept="*/*" type="file">
+    <button id="deGap">mode1</button>
+    <p id="msg"></p>
+    <div id="container"></div>
+    <script>
+        let limit = 10
+        let unloadImages = []
+        let curImg = null
+        let scrollHash = {'j': -1, 'l': 1, 'i': -5, 'k': 5}
+        let offsetHash = {'s': 1, 'w': -1}
+
+        uploader.addEventListener('change', addImage)
+
+        function addImage(e) {
+            msg.innerHTML = '图片加载中，请稍候...'
+
+            setTimeout(() => {
+                let files = [...e.target.files].filter(file => /^image/i.test(file.type))
+
+                if (!files.length) {
+                    msg.innerHTML = '未发现图片'
+                    return
+                }
+
+                let imgHTML = ''
+                files.forEach(file => imgHTML +=
+                    `<img data-src='${window.URL.createObjectURL(file)}' onclick="window.open(this.src)">`)
+                container.innerHTML = imgHTML
+                msg.innerHTML = ''
+
+                let images = unloadImages = [...document.images]
+                images.forEach(img => img.onmouseenter = e => curImg = e.target)
+
+                loadImage(limit)
+            }, 100)
+        }
+
+        document.addEventListener('scroll', () => loadImage(limit))
+
+        var loadImage = debounce(function (count) {
+            console.log('load more')
+            let selected = unloadImages.splice(0, count)
+            selected.forEach(img => img.src = img.dataset.src)
+        }, 250);
+
+        function debounce(func, wait, immediate) {
+            var timeout
+            return function () {
+                var context = this, args = arguments
+                var later = function () {
+                    timeout = null
+                    if (!immediate) func.apply(context, args)
+                };
+                var callNow = immediate && !timeout
+                clearTimeout(timeout)
+                timeout = setTimeout(later, wait)
+                if (callNow) func.apply(context, args)
+            }
+        }
+
+        deGap.addEventListener('click', e => {
+            if (container.classList.contains('noGap')) {
+                container.classList.remove('noGap')
+                e.currentTarget.innerHTML = 'mode1'
+            } else {
+                container.classList.add('noGap')
+                e.currentTarget.innerHTML = 'mode2'
+            }
+        })
+
+        document.body.oncontextmenu = function (e) {
+            if (e.button === 2) {
+                scrollPage(1)
+            }
+            return false
+        }
+
+        document.body.addEventListener('keypress', function(e) {
+            let times = scrollHash[e.key]
+            let offset = offsetHash[e.key]
+            let switchMode = e.key === 'z'
+            times? scrollPage(times): null
+            offset? window.scrollBy({top: offset}): null
+            switchMode? deGap.click(): null
+        })
+
+        function scrollPage(times) {
+            let images = [...document.images]
+            let idx = images.indexOf(curImg) + times
+            if(idx < 0)
+                idx = 0
+            if(idx > images.length - 1)
+                idx = images.length - 1
+            images[idx].scrollIntoView({behavior: 'smooth'})
+        }
+    </script>
+</body>
+
+</html>

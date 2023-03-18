@@ -26,6 +26,7 @@
 
         #container.noGap >img {
             transform: scale(1);
+            opacity: 1;
         }
 
         #container.noGap >img:hover {
@@ -75,7 +76,6 @@
         document.addEventListener('scroll', () => loadImage(limit))
 
         var loadImage = debounce(function (count) {
-            console.log('load more')
             let selected = unloadImages.splice(0, count)
             selected.forEach(img => img.src = img.dataset.src)
         }, 250);
